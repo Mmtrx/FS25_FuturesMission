@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<modDesc descVersion="101">
+	<author>Mmtrx</author>
+	<version>0.0.0.4</version>
+	<title>
+		<en>Futures Contracts</en>
+		<de>Warentermin-Aufträge</de>
+		<fr>Contrats De Future</fr>
+	</title>
+	<description>
+		<en>
+			<![CDATA[
+Implements futures contracts
+
+]]>
+		</en>
+		<de>
+			<![CDATA[
+Erzeugt Aufträge fürr Warentermin-Geschäfte
+
+]]>
+		</de>
+		<fr>
+			<![CDATA[
+Génère des tâches pour la futures
+
+]]>
+		</fr>
+	</description>
+	<iconFilename>icon_Futures.dds</iconFilename>
+	<multiplayer supported="true" />
+	<extraSourceFiles>
+		<sourceFile filename="main.lua" />
+	</extraSourceFiles>
+
+	<!--missionVehicles filename="missionVehicles/futures.xml" /-->
+	<dependencies>
+		<dependency optional="true">FS25_MarketDynamics</dependency>
+	</dependencies>
+
+	<l10n>
+		<text name="fm_locked_price">
+			<en>Locked Price</en>
+			<de>Festpreis</de>
+		</text>
+		<text name="contract_futures_title">
+			<en>Futures</en>
+			<de>Warentermin</de>
+		</text>
+		<text name="contract_futures_desc">
+			<en>Deliver the specified amount of product to the selling station in time.</en>
+			<de>Liefere die zugesagte Menge bis zum Termin zur angegebenen Verkaufsstation</de>
+		</text>
+		<text name="fm_extraProgress">
+			<en>Any missing amount at contract expiry will lead to a %d%% penalty.</en>
+			<de>Eine Fehlmenge bei Vertragsablauf wird mit %d%% Pönale belegt.</de>
+		</text>
+		<text name="fm_missionProgress">
+			<en>%d%% delivered on futures contract %s </en>
+			<de>%d%% für Warenterminvertrag %s geliefert</de>
+		</text>
+		<text name="fm_finished">
+			<en>Futures contract %s finished</en>
+			<de>Warenterminvertrag %s abgeschlossen</de>
+		</text>
+		<text name="fm_failed">
+			<en>Futures contract %s failed</en>
+			<de>Warenterminvertrag %s fehlgeschlagen</de>
+		</text>
+		<text name="fm_timedOut">
+			<en>Time for futures contract %s ran out</en>
+			<de>Termin für Warenterminvertrag %s überschritten</de>
+		</text>
+	</l10n>
+</modDesc>
