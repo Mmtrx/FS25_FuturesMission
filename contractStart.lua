@@ -74,7 +74,7 @@ end
 InGameMenuContractsFrame.startContract = Utils.overwrittenFunction(InGameMenuContractsFrame.startContract, 
 	function(frCon, superf, wantsLease)
 	-- overwrites InGameMenuContractsFrame:startContract()
-	local futures = g_FuturesMissions 
+	local futures = g_FuturesMission
 	local m = frCon:getSelectedContract().mission
 	if m.type.name ~= FuturesMission.NAME then
 		superf(frCon, wantsLease)  		-- sends base game start evt 
