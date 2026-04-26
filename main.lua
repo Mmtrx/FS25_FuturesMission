@@ -7,6 +7,7 @@
 --  v0.0.0.1    26.03.2026  initial
 --  v1.0.0.0    07.04.2026  add integration with FS25_MarketDynamics,
 -- 													add savegame sync with MDM
+--  v1.1.0.0    25.04.2026  add MP sync
 --=======================================================================================================
 -----------------------------------------------------------------------------
 local modDirectory = g_currentModDirectory
@@ -39,13 +40,13 @@ function Futures.new()
 	g_missionManager:registerMissionType(FuturesMission, FuturesMission.NAME, 
 		FuturesMission.MAX_NUMINSTANCES)
 	
-	--[[ rewardPerHa for other mission types are loaded from map
-	local data = g_missionManager:getMissionTypeDataByName(FuturesMission.NAME)
-	data.rewardPerHa = FuturesMission.REWARD_PER_HA
-	data.fruitTypeIndices = {}
-	data.failureCostFactor = 0.1
-	data.failureCostOfTotal = 0.95
-	]]
+	--[[ other params for mission type are normally loaded from map
+		local data = g_missionManager:getMissionTypeDataByName(FuturesMission.NAME)
+		data.rewardPerHa = FuturesMission.REWARD_PER_HA
+		data.fruitTypeIndices = {}
+		data.failureCostFactor = 0.1
+		data.failureCostOfTotal = 0.95
+		]]
 
 	-- load and initiate contract start dialog:
 	local fname = self.directory .."startContract.xml"

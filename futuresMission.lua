@@ -5,6 +5,7 @@
 -- Author:      Mmtrx
 -- Changelog:
 --  v1.0.0.0    17.03.2026  initial
+--  v1.1.0.0    25.04.2026  add MP sync
 --=======================================================================================================
 FuturesMission = {
 	NAME = "futuresMission",
@@ -16,6 +17,7 @@ FuturesMission = {
 }
 local FuturesMission_mt = Class(FuturesMission, AbstractMission)
 InitObjectClass(FuturesMission, "FuturesMission")
+
 function FuturesMission.registerSavegameXMLPaths(schema, key)
 	FuturesMission:superClass().registerSavegameXMLPaths(schema, key)
 	local mkey = string.format("%s.futures", key)
@@ -28,7 +30,6 @@ function FuturesMission.registerSavegameXMLPaths(schema, key)
 	schema:register(XMLValueType.STRING, mkey .. "#sellingStationPlaceableUniqueId", "Unique id of the selling point")
 	schema:register(XMLValueType.INT, mkey .. "#unloadingStationIndex", "Index of the unloading station")
 end
-
 function FuturesMission.new(isServer, isClient, customMt)
 	local self = AbstractMission.new(isServer, isClient, 
 		g_i18n:getText("contract_futures_title"),
@@ -47,6 +48,7 @@ function FuturesMission.new(isServer, isClient, customMt)
 	self.mapHotspots = {}
 	self.modName = g_currentModName
 	self.extraProgressText = g_i18n:getText("fm_extraProgress", self.modName)
+	self.progFormatted = false
 	self.missionProgressText = g_i18n:getText("fm_missionProgress", self.modName)
 	-- 
 	self.mdm = g_currentMission.MarketDynamics
@@ -54,75 +56,6 @@ function FuturesMission.new(isServer, isClient, customMt)
 	self.mdmId = nil
 	return self
 end
-function FuturesMission:getRandomSellPoint(fillTypeIndex)
-	local numSellPoints = 0
-	local sellPoints = {}
-
-	for _, unloadingStation in pairs(g_currentMission.storageSystem:getUnloadingStations()) do
-		if unloadingStation.isSellingPoint and unloadingStation.allowMissions and unloadingStation.owningPlaceable ~= nil and unloadingStation.acceptedFillTypes[fillTypeIndex] then
-			local pricePerLitre = unloadingStation:getEffectiveFillTypePrice(fillTypeIndex)
-			if pricePerLitre > 0 then
-				table.insert(sellPoints, {
-					sellingStation = unloadingStation,
-					pricePerLitre = pricePerLitre
-				})
-				numSellPoints += 1
-			end
-		end
-	end
-	if numSellPoints > 0 then
-		local index = numSellPoints > 1 and math.random(numSellPoints) or 1
-		local sellPoint = sellPoints[index]
-		return sellPoint.sellingStation, sellPoint.pricePerLitre
-	end
-
-	return nil, 0
-end
-function FuturesMission:setSellingStation(sellingStation)
-	if sellingStation == nil then
-		Logging.devError("[FM] Failed to set sellingStation, value was nil")
-		return
-	end
-	self.pendingSellingStationId = nil
-	self.sellingStation = sellingStation
-
-	--self:updateTexts()
-
-	local placeable = sellingStation.owningPlaceable
-
-	if placeable ~= nil and placeable.getHotspot ~= nil then
-		local hotspot = placeable:getHotspot()
-
-		if hotspot ~= nil then
-			self.sellingStationMapHotspot = HarvestMissionHotspot.new()
-			self.sellingStationMapHotspot:setWorldPosition(hotspot:getWorldPosition())
-
-			table.addElement(self.mapHotspots, self.sellingStationMapHotspot)
-
-			-- Should only be true if mission is already active
-			if self.addSellingStationHotspot then
-				g_currentMission:addMapHotspot(self.sellingStationMapHotspot)
-			end
-		end
-	end
-end
-function FuturesMission:addHotspot()
-	if self.sellingStationMapHotspot ~= nil then
-		g_currentMission:addMapHotspot(self.sellingStationMapHotspot)
-	end
-	self.addSellingStationHotspot = true
-end
-function FuturesMission:removeHotspot()
-	if self.sellingStationMapHotspot ~= nil then
-		g_currentMission:removeMapHotspot(self.sellingStationMapHotspot)
-	end
-	self.addSellingStationHotspot = false
-end
-function FuturesMission.getRandomNpcIndex()
-	-- body-- todo; ()
-	return g_npcManager:getRandomIndex()
-end
-	
 function FuturesMission:init(fillTypeIndex, duration)
 	-- duration in months
 	local ok = FuturesMission:superClass().init(self)
@@ -293,6 +226,7 @@ function FuturesMission:loadFromXMLFile(xmlFile, key)
 	end
 	self.sellingStationPlaceableUniqueId = v43
 	self.unloadingStationIndex = index
+	debugPrint("* futures from savegame: %s in %s mon",name,self.months)
 	return true
 end
 function FuturesMission:getVehicleGroupFromIdentifier(identifier, ...)
@@ -328,52 +262,80 @@ function FuturesMission:onSavegameLoaded()
 		g_missionManager:markMissionForDeletion(self)
 	end
 end
+function FuturesMission:setSellingStation(sellingStation)
+	if sellingStation == nil then
+		Logging.devError("[FM] Failed to set sellingStation, value was nil")
+		return
+	end
+	self.pendingSellingStationId = nil
+	self.sellingStation = sellingStation
+
+	--self:updateTexts()
+
+	local placeable = sellingStation.owningPlaceable
+
+	if placeable ~= nil and placeable.getHotspot ~= nil then
+		local hotspot = placeable:getHotspot()
+
+		if hotspot ~= nil then
+			self.sellingStationMapHotspot = HarvestMissionHotspot.new()
+			self.sellingStationMapHotspot:setWorldPosition(hotspot:getWorldPosition())
+
+			table.addElement(self.mapHotspots, self.sellingStationMapHotspot)
+
+			-- Should only be true if mission is already active
+			if self.addSellingStationHotspot then
+				g_currentMission:addMapHotspot(self.sellingStationMapHotspot)
+			end
+		end
+	end
+end
+function FuturesMission:addHotspot()
+	if self.sellingStationMapHotspot ~= nil then
+		g_currentMission:addMapHotspot(self.sellingStationMapHotspot)
+	end
+	self.addSellingStationHotspot = true
+end
+function FuturesMission:removeHotspot()
+	if self.sellingStationMapHotspot ~= nil then
+		g_currentMission:removeMapHotspot(self.sellingStationMapHotspot)
+	end
+	self.addSellingStationHotspot = false
+end
+function FuturesMission:getRandomSellPoint(fillTypeIndex)
+	local numSellPoints = 0
+	local sellPoints = {}
+
+	for _, unloadingStation in pairs(g_currentMission.storageSystem:getUnloadingStations()) do
+		if unloadingStation.isSellingPoint and unloadingStation.allowMissions and unloadingStation.owningPlaceable ~= nil and unloadingStation.acceptedFillTypes[fillTypeIndex] then
+			local pricePerLitre = unloadingStation:getEffectiveFillTypePrice(fillTypeIndex)
+			if pricePerLitre > 0 then
+				table.insert(sellPoints, {
+					sellingStation = unloadingStation,
+					pricePerLitre = pricePerLitre
+				})
+				numSellPoints += 1
+			end
+		end
+	end
+	if numSellPoints > 0 then
+		local index = numSellPoints > 1 and math.random(numSellPoints) or 1
+		local sellPoint = sellPoints[index]
+		return sellPoint.sellingStation, sellPoint.pricePerLitre
+	end
+
+	return nil, 0
+end
+function FuturesMission.getRandomNpcIndex()
+	-- body-- todo; ()
+	return g_npcManager:getRandomIndex()
+end
 function FuturesMission:getStealingCosts()
 	-- to do: calc 15% price for missing amount
 	return 0
 end
-function FuturesMission:roundToWholeBales(liters)
-	local baleSizes = g_baleManager:getPossibleCapacitiesForFillType(self.fillTypeIndex)
-	local minBales = math.huge
-	local minBaleIndex = 1
-
-	for i = 1, #baleSizes do
-		local bales = math.floor(liters * 0.95 / baleSizes[i])
-		if bales < minBales then
-			minBales = bales
-			minBaleIndex = i
-		end
-	end
-	return math.max(minBales * baleSizes[minBaleIndex], liters - 10000)
-end
 function FuturesMission.getMissionTypeName(_)
 	return FuturesMission.NAME
-end
-function FuturesMission:validate()
-	-- to delete mission templates when end date is next month
-	local env = g_currentMission.environment
-	local monthsLeft = self:getDaysLeft() / env.daysPerPeriod
-	if monthsLeft <= 1 then 
-		debugPrint("contract %s invalidated", self:getLocation())
-	end
-	return monthsLeft > 1 
-end
-function FuturesMission:tryToResolveSellingStation()
-	HarvestMission.tryToResolveSellingStation(self)
-end
-
-function FuturesMission:fillSold(delta)
-	local applying = math.min(self.expectedLiters -self.depositedLiters, delta)
-	self.depositedLiters = self.depositedLiters + applying
-	self.bcInt.recordDelivery(self.mdmId, applying)
-
-	if self.depositedLiters >= self.expectedLiters then
-		if self.sellingStation ~= nil then
-			-- Remove mission from the Selling Station and start selling
-			self.sellingStation.missions[self] = nil 
-		end
-	end
-	self.lastFillSoldTime = 30 -- Reset notification timer
 end
 function FuturesMission:getDaysLeft()
 	local env = g_currentMission.environment
@@ -404,6 +366,12 @@ function FuturesMission:getDetails()
 		value = i18n:formatMoney(self.pricePerLiter*1000, 0)
 	})
 	if self:getWasStarted() then
+		if not self.progFormatted then 
+			-- update extra progress text with curent penalty %
+			local penalty = self.bcInt.getPenaltyPercent(self.farmId)
+			self.extraProgressText = string.format(self.extraProgressText, penalty)
+			self.progFormatted = true
+		end
 		table.insert(details, {
 			title = i18n:getText("contract_total"),
 			value = i18n:formatVolume(self.expectedLiters, 0, unitText)
@@ -474,7 +442,34 @@ function FuturesMission:getSellingStationName()
 	end
 	return "Unknown"
 end
+function FuturesMission:validate()
+	-- to delete mission templates when end date is next month
+	local env = g_currentMission.environment
+	local monthsLeft = self:getDaysLeft() / env.daysPerPeriod
+	if monthsLeft <= 1 then 
+		debugPrint("contract %s invalidated", self:getLocation())
+	end
+	return monthsLeft > 1 
+end
+function FuturesMission:tryToResolveSellingStation()
+	HarvestMission.tryToResolveSellingStation(self)
+end
+function FuturesMission:fillSold(delta)
+	local applying = math.min(self.expectedLiters -self.depositedLiters, delta)
+	self.depositedLiters = self.depositedLiters + applying
+	self.bcInt.recordDelivery(self.mdmId, applying)
 
+	if self.depositedLiters >= self.expectedLiters then
+		if self.sellingStation ~= nil then
+			-- Remove mission from the Selling Station and start selling
+			self.sellingStation.missions[self] = nil 
+		end
+	end
+	self.lastFillSoldTime = 30 -- Reset notification timer
+end
+function FuturesMission:hasLeasableVehicles()
+	return false
+end
 function getRandomFilltypeMonth()
 	-- return a crop fillType and duration in months, that are not already offered
 	missionType = g_missionManager:getMissionType(FuturesMission.NAME)
@@ -592,10 +587,6 @@ function FuturesMission:start()
 	end
 	self.sellingStation.missions[self] = self
 
-	-- update extra progress text with curent penalty %
-	local penalty = self.bcInt.getPenaltyPercent(self.farmId)
-	self.extraProgressText = string.format(self.extraProgressText, penalty)
-
 	if self.fromSavedMdm then return true end 
 	
 	-- create a duplicate as NEW mission
@@ -654,3 +645,18 @@ function FuturesMission:finish(finishState)
 
 	FuturesMission:superClass().finish(self, finishState)
 end
+--[[ possible future use
+function FuturesMission:roundToWholeBales(liters)
+	local baleSizes = g_baleManager:getPossibleCapacitiesForFillType(self.fillTypeIndex)
+	local minBales = math.huge
+	local minBaleIndex = 1
+
+	for i = 1, #baleSizes do
+		local bales = math.floor(liters * 0.95 / baleSizes[i])
+		if bales < minBales then
+			minBales = bales
+			minBaleIndex = i
+		end
+	end
+	return math.max(minBales * baleSizes[minBaleIndex], liters - 10000)
+end]]

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="101">
 	<author>Mmtrx</author>
-	<version>0.0.0.4</version>
+	<version>1.1.0.0</version>
 	<title>
 		<en>Futures Contracts</en>
 		<de>Warentermin-Aufträge</de>
@@ -12,11 +12,15 @@
 			<![CDATA[
 Implements futures contracts
 
+Changes 1.1.0.0
+- make MP ready
+- add savegame sync with FS25_MarketDynamics
+
 ]]>
 		</en>
 		<de>
 			<![CDATA[
-Erzeugt Aufträge fürr Warentermin-Geschäfte
+Erzeugt Aufträge für Warentermin-Geschäfte
 
 ]]>
 		</de>
@@ -33,7 +37,6 @@ Génère des tâches pour la futures
 		<sourceFile filename="main.lua" />
 	</extraSourceFiles>
 
-	<!--missionVehicles filename="missionVehicles/futures.xml" /-->
 	<dependencies>
 		<dependency optional="true">FS25_MarketDynamics</dependency>
 	</dependencies>
