@@ -331,8 +331,11 @@ function FuturesMission.getRandomNpcIndex()
 	return g_npcManager:getRandomIndex()
 end
 function FuturesMission:getStealingCosts()
-	-- to do: calc 15% price for missing amount
-	return 0
+	-- calc 15% price for missing amount
+	local penPerc = self.bcInt.getPenaltyPercent(self.farmId) / 100
+	local reimb = (self.pricePerLiter or 0) * self.depositedLiters 
+	local penalty = (self.expectedLiters-self.depositedLiters)* penPerc * self.pricePerLiter
+	return math.min(reimb, penalty)
 end
 function FuturesMission.getMissionTypeName(_)
 	return FuturesMission.NAME

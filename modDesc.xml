@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <modDesc descVersion="101">
 	<author>Mmtrx</author>
-	<version>1.1.0.0</version>
+	<version>1.1.0.1</version>
 	<title>
 		<en>Futures Contracts</en>
 		<de>Warentermin-Aufträge</de>
@@ -11,6 +11,9 @@
 		<en>
 			<![CDATA[
 Implements futures contracts
+
+Changes 1.1.0.1
+- calculate penalty for canceled/ timed out contracts
 
 Changes 1.1.0.0
 - make MP ready
